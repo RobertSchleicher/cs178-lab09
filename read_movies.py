@@ -1,9 +1,9 @@
 # read_movies.py
-# Reads all items from the DynamoDB Movies table and prints them.
+# Reads a movie from the DynamoDB Movies table by title
 # Part of Lab 09 — feature/read-dynamo branch
 
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr
 
 # -------------------------------------------------------
 # Configuration — update REGION if your table is elsewhere
@@ -29,32 +29,33 @@ def print_movie(movie):
     print(f"  Year   : {year}")
     print(f"  Ratings: {ratings}")
     print(f" Director : {director}")
-    print(f" Genre :{genre}")
+    print(f" Genre : {genre}")
     print()
 
 
-def print_all_movies():
-    """Scan the entire Movies table and print each item."""
+def get_movie_by_title():
+    """Prompt the user for a movie title and search the DynamoDB table."""
     table = get_table()
-    
-    # scan() retrieves ALL items in the table.
-    # For large tables you'd use query() instead — but for our small
-    # dataset, scan() is fine.
-    response = table.scan()
-    items = response.get("Items", [])
-    
-    if not items:
-        print("No movies found. Make sure your DynamoDB table has data.")
-        return
-    
-    print(f"Found {len(items)} movie(s):\n")
-    for movie in items:
-        print_movie(movie)
+    title = input("Enter the movie title: ").strip()
+
+    # scan() with a FilterExpression to match the title
+    response = table.scan(
+        FilterExpression=Attr("Title").eq(title)
+    )
+
+    movies = response.get("Items", [])
+
+    if movies:
+        print(f"\nMovie(s) found with title '{title}':\n")
+        for movie in movies:
+            print_movie(movie)
+    else:
+        print(f"\nNo movie found with title '{title}'")
 
 
 def main():
     print("===== Reading from DynamoDB =====\n")
-    print_all_movies()
+    get_movie_by_title()  # call the prompt function
 
 
 if __name__ == "__main__":
